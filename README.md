@@ -18,7 +18,7 @@ Que los estudiantes aprendan a desplegar una VPN P2S en Azure para conexión rem
 - Azure CLI instalado (o usar Azure Cloud Shell)
 - Cuenta gratuita o de estudiante en Azure
 - Permisos para crear grupos de recursos y redes
-- Linux como sistema operativo cliente para pruebas
+- Linux como sistema operativo cliente para pruebas (opcional: Windows)
 
 ---
 
@@ -67,7 +67,27 @@ cd <carpeta-extraida>
 sudo openvpn <nombre_config.ovpn>
 ```
 
-Si ves `Initialization Sequence Completed`, ¡la VPN está funcionando!
+📌 Si ves `Initialization Sequence Completed`, ¡la VPN está funcionando!
+
+📎 El archivo `vpn-client.zip` lo puedes descargar desde el **Portal de Azure** después de que el gateway haya sido creado completamente:
+
+1. Ir al recurso del gateway VPN
+2. Buscar opción: **"Descargar cliente VPN"**
+3. Seleccionar protocolo OpenVPN
+4. Descargar ZIP y moverlo al cliente Linux o Windows
+
+---
+
+### 🔹 ¿Y si quiero probarlo desde Windows?
+
+1. Descargar el ZIP del cliente VPN desde el portal de Azure
+2. Instalar [OpenVPN GUI para Windows](https://openvpn.net/community-downloads/)
+3. Copiar los archivos `.ovpn` dentro del directorio `C:\Program Files\OpenVPN\config`
+4. Abrir OpenVPN GUI como administrador y conectar
+
+✅ También mostrará `Initialization Sequence Completed` al conectarse con éxito.
+
+---
 
 ### 🔹 `eliminar_lab_p2s.sh`
 - Pide confirmación explícita
