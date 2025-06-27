@@ -124,3 +124,105 @@ chmod +x crear_lab_p2s.sh
 
 ## 🧑‍🏫 Autor
 Jose Garagorry - Instructor de Redes y Arquitecturas Azure
+
+---
+
+## 📜 Scripts
+
+### 🔧 crear_lab_p2s.sh
+```bash
+#!/bin/bash
+
+set -e
+
+RG="rg-vpn-p2s-lab"
+LOC="eastus"
+VNET="vnet-p2s"
+SUBNET="subnet-p2s"
+GW_SUBNET="GatewaySubnet"
+GW_PUBLIC_IP="gw-ip"
+GW_NAME="vpn-gateway"
+GW_SKU="VpnGw1"
+VPN_CLIENT_ADDRESS_POOL="172.16.201.0/24"
+
+echo "🔐 Iniciando sesión en Azure..."
+az login
+
+echo "🔧 Creando grupo de recursos..."
+az group create -n $RG -l $LOC --tags autor=gmtech proyecto=lab_vpn_p2s
+
+echo "🌐 Creando red virtual y subred..."
+az network vnet create \
+  -g $RG -n $VNET --address-prefix 10.10.0.0/16 \
+  --subnet-name $SUBNET --subnet-prefix 10.10.1.0/24
+
+echo "🧱 Agregando GatewaySubnet..."
+az network vnet subnet create \
+  -g $RG --vnet-name $VNET -n $GW_SUBNET --address-prefix 10.10.255.0/27
+
+echo "🌐 Creando IP pública para el gateway..."
+az network public-ip create \
+  -g $RG -n $GW_PUBLIC_IP --sku Standard --allocation-method Static
+
+echo "🚪 Creando Gateway de VPN... (esto tomará ~30 minutos)"
+az network vnet-gateway create \
+  -g $RG -n $GW_NAME \
+  --public-ip-addresses $GW_PUBLIC_IP \
+  --vnet $VNET \
+  --gateway-type Vpn \
+  --vpn-type RouteBased \
+  --sku $GW_SKU \
+  --client-protocols OpenVPN \
+  --address-prefixes $VPN_CLIENT_ADDRESS_POOL \
+  --no-wait
+
+echo "✅ Laboratorio P2S creado exitosamente."
+```
+
+### 🔍 verificar_lab_p2s.sh
+```bash
+#!/bin/bash
+
+RG="rg-vpn-p2s-lab"
+GW_NAME="vpn-gateway"
+
+echo "🔍 Verificando estado del Gateway..."
+az network vnet-gateway show -g $RG -n $GW_NAME --query "{name:name,location:location,provisioningState:provisioningState,vpnClientConfiguration:vpnClientConfiguration}" -o table
+
+echo "🌐 Verifica desde el portal de Azure si ya puedes descargar el cliente VPN (OpenVPN)"
+echo "📎 Una vez descargado, puedes conectarte desde Linux así:"
+echo ""
+echo "    sudo apt install openvpn unzip -y"
+echo "    unzip <vpn-client.zip>"
+echo "    cd <carpeta-extraida>"
+echo "    sudo openvpn <archivo.ovpn>"
+echo ""
+echo "📌 Verás 'Initialization Sequence Completed' si se conectó bien."
+```
+
+### 🗑 eliminar_lab_p2s.sh
+```bash
+#!/bin/bash
+
+RG="rg-vpn-p2s-lab"
+
+echo "⚠️ ¡Vas a eliminar toda la infraestructura del laboratorio P2S!"
+echo "⏳ Si fue usado menos de 1 hora, su costo es menor a $0.10 USD"
+echo "¿Estás seguro? (s/n): "
+read confirm
+
+if [[ "$confirm" != "s" ]]; then
+  echo "❌ Cancelado por el usuario."
+  exit 1
+fi
+
+echo "🧹 Eliminando grupo de recursos $RG ..."
+az group delete -n $RG --yes --no-wait
+
+while az group exists -n $RG; do
+  echo "⏳ Esperando a que se elimine el grupo de recursos..."
+  sleep 10
+done
+
+echo "✅ Laboratorio eliminado completamente."
+```
